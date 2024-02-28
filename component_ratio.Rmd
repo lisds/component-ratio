@@ -1,0 +1,93 @@
+---
+jupyter:
+  jupytext:
+    notebook_metadata_filter: all,-language_info
+    split_at_heading: true
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.16.0
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+---
+
+```{python}
+import numpy as np
+import pandas as pd
+pd.set_option('mode.copy_on_write', True)
+```
+
+```{python}
+df = pd.read_csv('freelist_responses.csv')
+df
+```
+
+```{python}
+# Get the numerical data only.
+responses = df.loc[:, 'Worms':]
+responses
+```
+
+```{python}
+# Subtract the mean from each column.
+mc_resps = responses - responses.mean()
+mc_resps
+```
+
+```{python}
+# Confirm that all columns do now have (near as dammit) zero mean.
+mc_resps.mean()
+```
+
+```{python}
+# We now do "singular value decomposition".  This implements
+# principal component analysis (PCA).
+U, S, Vt = np.linalg.svd(mc_resps.T, full_matrices=False)
+```
+
+```{python}
+# The "singular values" give the weighting for each component:
+S
+```
+
+```{python}
+# Now, let's divide the first component by all subsequent,
+# to get the ratios of the first to the rest:
+S[0] / S[1:]
+```
+
+```{python}
+# Now do the same calculation in one shot:
+def component_ratios(responses):
+    """ Get ratio of first to subsequent PCA component weightings.
+    
+    Parameters
+    ----------
+    responses : array or data frame
+        2D array or data frame with numerical responses.
+        
+    Returns
+    -------
+    R : PCA component ratios
+        Calculate PCA component weightings, and return ratio of
+        first component to all subsequent components.
+    """
+    # Subtract the mean from each column.
+    mc = responses - responses.mean()
+    # Do singular value decomposition to implement PCA
+    U, S, Vt = np.linalg.svd(mc_resps.T, full_matrices=False)
+    # The component weights are in the 1D array S.
+    return S[0] / S[1:]  # Ratio of first to all subsequent.
+```
+
+```{python}
+# This calculation is the same as that above, just using
+# the function - to confirm we get the same answer.
+component_ratios = component_ratios(responses)
+component_ratios
+```
+
+Now upload your own CSV file in the same form as [
