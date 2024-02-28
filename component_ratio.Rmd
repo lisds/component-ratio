@@ -123,7 +123,7 @@ tutorial linked above for details of this procedure.
 ```{python}
 # We now do "singular value decomposition".  This implements
 # principal component analysis (PCA).
-U, S, Vt = np.linalg.svd(mc_resps.T, full_matrices=False)
+U, S, Vt = np.linalg.svd(mc_resps, full_matrices=False)
 ```
 
 The loadings for each component come back to us in the array `S` above (`S` for
@@ -188,7 +188,7 @@ def calc_component_ratios(responses):
     # Subtract the mean from each column.
     mc = responses - responses.mean()
     # Do singular value decomposition to implement PCA
-    U, S, Vt = np.linalg.svd(mc_resps.T, full_matrices=False)
+    U, S, Vt = np.linalg.svd(mc_resps, full_matrices=False)
     # The component weights are in the 1D array S.
     return S[0] / S[1:]  # Ratio of first to all subsequent.
 ```
