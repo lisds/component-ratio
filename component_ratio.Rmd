@@ -14,33 +14,111 @@ jupyter:
     name: python3
 ---
 
+# Calculating Principal Component Ratios
+
+In this notebook, we show you how to calculate the *principal components* of
+some numerical responses.  We refer to this calculation as [Principal Component
+Analysis](https://en.wikipedia.org/wiki/Principal_component_analysis).
+
+If you'd like some more detail on what this analysis is doing, and you don't
+mind reminding yourself about some basic mathematics, then have a look at [this
+tutorial](https://matthew-brett.github.io/teaching/pca_introduction.html).
+Follow the background links if the mathematics is unfamiliar.  The mathematics
+is the kind of thing you'd cover in the middle of maths A-level, but you do it
+without having done maths A-level if you're committed — the background is
+fairly light.
+
+PCA analysis is interesting to us, because it involves calculating patterns
+within the data, where each pattern is one *component*.  You can think of these
+patterns as ways that the responses vary together.   Each component (pattern)
+comes with a *loading* that expresses the extend to which the component
+captures the variation in the responses. When the responses vary together
+strongly, you will see one or a few components with large loadings, and the
+remaining components will have small loadings, because the variation of the
+data has already been captured by the first components.  When the responses do
+not vary together, there will not be strong patterns, the components will all
+have similar loadings.
+
+One application of PCA is to see whether the responses represent (mainly) one
+strong pattern — where the responses vary in the same way across rows in the
+data.  This can happen when there is a single homogeneous group, answering in
+an equivalent way.
+
+## How to calculate the PCA
+
+To use this notebook, click on the cell below, and then press the Shift key at
+the same time as the Enter (Return) key.  Call this Shift-Enter.  This will
+cause the notebook system to *run* the cell and move on to the next.  You will
+often see the result of running the cell underneath the cell.  Keep pressing
+Shift-Enter to run through the notebook.
+
+We start by loading our standard libraries to read and analyze the data.
+
 ```{python}
+# Library to work with arrays.
 import numpy as np
+# Library to read data in Python.
 import pandas as pd
+# Standard configuration to work safely with Pandas.
 pd.set_option('mode.copy_on_write', True)
 ```
 
+First we use Pandas to read in some example responses.  You can have a look at
+the data file by clicking [this link](freelist_responses.csv).
+
 ```{python}
+# Read in the data file.
 df = pd.read_csv('freelist_responses.csv')
+# Show it in spreadsheet (data frame) form.
 df
 ```
 
+To do the PCA, we need to whittle the data table down the numerical value columns.
+
 ```{python}
-# Get the numerical data only.
+# Select the numerical columns of data only.
 responses = df.loc[:, 'Worms':]
+# Show the selected columns as a data frame (spreadsheet).
 responses
 ```
+
+The PCA procedure is the following:
+
+* Subtract the mean of each column from each column of values.
+* Run a matrix procedure called a [Singular Value
+Decomposition](https://en.wikipedia.org/wiki/Singular_value_decomposition)
+(SVD).  If you're interested in the details of the SVD procedure, please
+consider reading the tutorial linked above.
+* The SVD gives the *loadings* of the detected *components* (patterns), in
+order, with the highest loading first.
+
+Then we can look to see if the first component has a much higher loading than
+the subsequent components.  If so, this implies the responses have a very
+strong and single pattern to them, and that, in turn, that the responses are
+rather homogeneous.
+
+So — first subtract the mean of each column from the values in the columns:
 
 ```{python}
 # Subtract the mean from each column.
 mc_resps = responses - responses.mean()
+# Show the new columns, with their mean subtracted.
 mc_resps
 ```
+
+Once we have subtracted the mean from each column, we should find that the
+resulting mean for each column is very close to 0.  It won't be exactly zero
+because the computer loses a tiny bit of accuracy when doing the calculation
+(this is called [floating point
+error](https://matthew-brett.github.io/teaching/floating_point.html)).
 
 ```{python}
 # Confirm that all columns do now have (near as dammit) zero mean.
 mc_resps.mean()
 ```
+
+Next we apply the SVD procedure to the mean-centered columns.  Again, see the
+tutorial linked above for details of this procedure.
 
 ```{python}
 # We now do "singular value decomposition".  This implements
@@ -48,27 +126,59 @@ mc_resps.mean()
 U, S, Vt = np.linalg.svd(mc_resps.T, full_matrices=False)
 ```
 
+The loadings for each component come back to us in the array `S` above (`S` for
+Singular values).
+
 ```{python}
-# The "singular values" give the weighting for each component:
+# The loadings give the weighting for each component:
 S
 ```
 
+Some of you will be familiar with the Python Scikit-Learn package for machine
+learning.  Scikit-learn has its own implementation of the PCA procedure, but,
+as you can see, it gives exactly the same answer as we got above.
+
 ```{python}
-# Now, let's divide the first component by all subsequent,
+# Get the PCA implementation from Scikit-learn.
+from sklearn.decomposition import PCA
+```
+
+```{python}
+# So the PCA calculation and show the calculated S array.
+PCA().fit(responses).singular_values_
+```
+
+Notice that Scikit-learn's calculation is exactly the same as our `S` above.
+
+
+## The component ratio
+
+We can get an idea of the extent to which the first (largest, highest-loaded)
+component captures the pattern of the whole set of data, by looking at the
+ratio of the first component to the later ones.   If the first component is
+large compared to the later ones, then these ratio numbers will be large.
+
+```{python}
+# Divide the first component by all subsequent,
 # to get the ratios of the first to the rest:
 S[0] / S[1:]
 ```
 
+## Putting our PCA into a function.
+
+We may want to run the PCA procedure on a few datasets, so we might want to put the procedure above into a function, that will run the steps and return the ratio.  The function just packages up the lines you've seen above into a named recipe.
+
 ```{python}
-# Now do the same calculation in one shot:
-def component_ratios(responses):
+# Make a recipe (function) to do the PCA calculation.
+
+def calc_component_ratios(responses):
     """ Get ratio of first to subsequent PCA component weightings.
-    
+
     Parameters
     ----------
     responses : array or data frame
         2D array or data frame with numerical responses.
-        
+
     Returns
     -------
     R : PCA component ratios
@@ -83,11 +193,43 @@ def component_ratios(responses):
     return S[0] / S[1:]  # Ratio of first to all subsequent.
 ```
 
+We check the `calc_component_ratios` function we've just defined gives us the same answer as we calculated in the notebook above.
+
 ```{python}
 # This calculation is the same as that above, just using
 # the function - to confirm we get the same answer.
-component_ratios = component_ratios(responses)
+component_ratios = calc_component_ratios(responses)
 component_ratios
 ```
 
-Now upload your own CSV file in the same form as [
+This was the result we got from our notebook calculation above:
+
+```{python}
+S[0] / S[1:]
+```
+
+## Now your turn
+
+You may want to run the PCA calculation on your own data.
+
+We suggest you download the CSV file here called  `freelist_responses.csv`, and edit it in Excel on your own computer.  Then save it in CSV format with another name.  It should have `.csv` as the file extension.
+
+Now upload your new CSV file in the same form as [freelist_reponses.csv](freelist_responses.csv).  Replace `freelist_responses.csv` in the cell below, with your own uploaded CSV filename.
+
+```{python}
+your_df = pd.read_csv('freelist_responses.csv')
+your_df
+```
+
+Here you select the numerical responses from the data frame.
+
+```{python}
+responses = your_df.loc[:, 'Worms':]
+responses
+```
+
+Now you can calculate the PCA component ratios with the function we wrote above.
+
+```{python}
+calc_component_ratios(responses)
+```
