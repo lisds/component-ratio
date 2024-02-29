@@ -24,20 +24,20 @@ If you'd like some more detail on what this analysis is doing, and you don't
 mind reminding yourself about some basic mathematics, then have a look at [this
 tutorial](https://matthew-brett.github.io/teaching/pca_introduction.html).
 Follow the background links if the mathematics is unfamiliar.  The mathematics
-is the kind of thing you'd cover in the middle of maths A-level, but you do it
-without having done maths A-level if you're committed — the background is
+is the kind of thing you'd cover in the middle of maths A-level, but you can do
+it without having done maths A-level if you're committed — the background is
 fairly light.
 
 PCA analysis is interesting to us, because it involves calculating patterns
 within the data, where each pattern is one *component*.  You can think of these
 patterns as ways that the responses vary together.   Each component (pattern)
-comes with a *loading* that expresses the extend to which the component
+comes with a *loading* that expresses the extent to which the component
 captures the variation in the responses. When the responses vary together
 strongly, you will see one or a few components with large loadings, and the
 remaining components will have small loadings, because the variation of the
 data has already been captured by the first components.  When the responses do
-not vary together, there will not be strong patterns, the components will all
-have similar loadings.
+not vary together, there will not be strong patterns, and the components will
+all have similar loadings.
 
 One application of PCA is to see whether the responses represent (mainly) one
 strong pattern — where the responses vary in the same way across rows in the
